@@ -1,4 +1,4 @@
-# READMEはhatGPTに作らせたから間違いあるかもしれない。
+# READMEはChatGPTに作らせたから間違いあるかもしれない。
 
 # 📝 Description / 説明
 As a member of the school broadcasting committee, I developed this web application to make it easy for students to send song requests online.  
@@ -270,4 +270,5 @@ This project is released under the [MIT License](LICENSE.md).
 GitHub: [@sosuku325](https://github.com/sosuku325)
 
 ---
+
 
