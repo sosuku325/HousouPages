@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>リクエストフォーム</title>
+</head>
+<body>
+    {% if current_user %}
+        <div style="text-align: right;">{{ current_user.username }}でログイン中</div>
+    {% endif %}
+
+    <h1>曲のリクエスト アーティスト名わからないときは適当になんか書いてください</h1>
+    <form method="POST">
+        <label>曲名：<input type="text" name="song_name" required></label><br>
+        <label>アーティスト名：<input type="text" name="artist_name" required></label><br>
+        <label>コメント：<input type="text" name="comment"></label><br>
+        <button type="submit">送信</button>
+    </form>
+
+    <a href="{{ url_for('requests_list') }}">リクエスト一覧へ</a> |
+    <a href="{{ url_for('logout') }}">ログアウト</a>
+</body>
+</html>

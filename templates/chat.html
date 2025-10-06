@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>リアルタイムチャット</title>
+  <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
+  <style>
+    #chat-box { height: 300px; border: 1px solid #ccc; overflow-y: scroll; padding: 5px; font-family: sans-serif;}
+    .message { margin-bottom: 8px;}
+    .username { font-weight: bold; margin-right: 5px;}
+    .text { white-space: pre-wrap;}
+    .timestamp { font-size: 0.8em; color: #888; margin-left: 10px;}
+    .edited-info { font-size: 0.75em; color: #666; margin-left: 10px; }
+
+    #admin-terminal {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #666;
+      background: #f0f0f0;
+      font-family: monospace;
+    }
+    #admin-terminal input {
+      width: 200px;
+      padding: 5px;
+      font-family: monospace;
+    }
+    #admin-terminal button {
+      padding: 5px 10px;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>リアルタイムチャット</h1>
+  <div id="chat-box"></div>
+  <input id="message-input" autocomplete="off" placeholder="メッセージを入力" />
+  <button id="send-btn">送信</button>
+
+  <div id="admin-terminal" style="display:none;">
+    <h2>管理者ターミナル</h2>
+    <input id="terminal-input" placeholder="コマンド入力 (例: clear)" />
+    <button id="terminal-exec">実行</button>
+  </div>
+
+  <script>
+    const socket = io();
+    const chatBox = document.getElementById('chat-box');
+    const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+
+    const username = "{{ current_user.username }}";
+    const currentUserId = "{{ current_user.id }}";
+
+    const isAdmin = (username === 'admin');
+
+    if (isAdmin) {
+      document.getElementById('admin-terminal').style.display = 'block';
+
+      const terminalInput = document.getElementById('terminal-input');
+      const terminalExec = document.getElementById('terminal-exec');
+
+      terminalExec.onclick = () => {
+        const cmd = terminalInput.value.trim();
+        if (cmd === 'clear') {
+          socket.emit('admin_command', { command: 'clear' });
+          terminalInput.value = '';
+        } else {
+          alert('不明なコマンドです');
+        }
+      };
+    }
+
+    fetch('/get_messages')
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(msg => {
+          addMessage({
+            messageId: msg.id,
+            username: msg.username,
+            message: msg.message,
+            timestamp: msg.timestamp,
+            editedAt: msg.edited_at,
+            isDeleted: msg.is_deleted,
+            userId: msg.user_id
+          });
+        });
+      });
+
+    function sendMessage() {
+      const msg = messageInput.value.trim();
+      if (msg) {
+        socket.emit('send_message', { username, message: msg });
+        messageInput.value = '';
+      }
+    }
+
+    function addMessage({ messageId, username, message, timestamp, editedAt = null, isDeleted = false, userId = null }) {
+      const isOwnMessage = userId && userId.toString() === currentUserId;
+
+      const div = document.createElement('div');
+      div.classList.add('message');
+      div.setAttribute('data-id', messageId);
+
+      const usernameSpan = document.createElement('span');
+      usernameSpan.classList.add('username');
+      usernameSpan.textContent = username + '：';
+
+      const textSpan = document.createElement('span');
+      textSpan.classList.add('text');
+      textSpan.textContent = isDeleted ? '[削除されたメッセージ]' : message;
+
+      const timeSpan = document.createElement('span');
+      timeSpan.classList.add('timestamp');
+      timeSpan.textContent = timestamp;
+
+      div.appendChild(usernameSpan);
+      div.appendChild(textSpan);
+      div.appendChild(timeSpan);
+
+      if (editedAt) {
+        const editedInfo = document.createElement('span');
+        editedInfo.classList.add('edited-info');
+        editedInfo.textContent = `（編集済み: ${editedAt}）`;
+        div.appendChild(editedInfo);
+      }
+
+      if (isOwnMessage && !isDeleted) {
+        const editBtn = document.createElement('button');
+        editBtn.textContent = '編集';
+        editBtn.onclick = () => {
+          const newMsg = prompt('メッセージを編集してください', message);
+          if (newMsg !== null && newMsg.trim() !== '') {
+            fetch(`/edit_message/${messageId}`, {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ content: newMsg.trim() })
+            }).then(res => res.json()).then(data => {
+              if (!data.success) {
+                alert(data.error || '編集に失敗しました');
+              }
+            });
+          }
+        };
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '削除';
+        deleteBtn.onclick = () => {
+          if (confirm('本当に削除しますか？')) {
+            fetch(`/delete_message/${messageId}`, { method: 'POST' })
+              .then(res => res.json())
+              .then(data => {
+                if (!data.success) {
+                  alert(data.error || '削除に失敗しました');
+                }
+              });
+          }
+        };
+
+        div.appendChild(editBtn);
+        div.appendChild(deleteBtn);
+      }
+
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    sendBtn.onclick = sendMessage;
+
+    messageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    socket.on('receive_message', data => {
+      addMessage({
+        messageId: data.message_id,
+        username: data.username,
+        message: data.message,
+        timestamp: data.timestamp,
+        userId: data.user_id
+      });
+    });
+
+    socket.on('message_edited', data => {
+      const msgDiv = document.querySelector(`.message[data-id='${data.message_id}']`);
+      if (msgDiv) {
+        const textSpan = msgDiv.querySelector('.text');
+        const editedInfo = msgDiv.querySelector('.edited-info');
+        const timeSpan = msgDiv.querySelector('.timestamp');
+
+        textSpan.textContent = data.new_content;
+
+        if (editedInfo) {
+          editedInfo.textContent = `（編集済み: ${data.edited_at}）`;
+        } else {
+          const newEdited = document.createElement('span');
+          newEdited.classList.add('edited-info');
+          newEdited.textContent = `（編集済み: ${data.edited_at}）`;
+          msgDiv.appendChild(newEdited);
+        }
+      }
+    });
+
+    socket.on('message_deleted', data => {
+      const msgDiv = document.querySelector(`.message[data-id='${data.message_id}']`);
+      if (msgDiv) {
+        const textSpan = msgDiv.querySelector('.text');
+        textSpan.textContent = '[削除されたメッセージ]';
+
+        const buttons = msgDiv.querySelectorAll('button');
+        buttons.forEach(btn => btn.disabled = true);
+      }
+    });
+
+    socket.on('clear_all_messages', () => {
+      chatBox.innerHTML = '';
+    });
+
+  </script>
+</body>
+</html>

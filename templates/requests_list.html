@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>リクエスト一覧(上から選んで流します。)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 20px;
+        }
+
+        .nav {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+
+        .nav a {
+            margin-left: 10px;
+            text-decoration: none;
+            color: #007bff;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #e0e0e0;
+        }
+
+        form {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+{% if current_user %}
+    <div class="nav">
+        {{ current_user.username }}でログイン中
+        {% if current_user.username == 'admin' %}
+            | <a href="{{ url_for('users_list') }}">ユーザー一覧(管理者)</a>
+            | <a href="{{ url_for('access_logs') }}">アクセス履歴</a>
+        {% endif %}
+        | <a href="{{ url_for('request_form') }}">リクエストする</a>
+        | <a href="{{ url_for('change_credentials') }}">ユーザー情報変更</a>
+        | <a href="{{ url_for('logout') }}">ログアウト</a>
+        &nbsp;&nbsp; 
+        | <a href="http://address" target="_blank">チャット</a>
+    </div>
+{% endif %}
+
+
+<h1>リクエスト一覧 (上から順番に流します。絶対選ばれます)</h1>
+
+<table>
+    <thead>
+        <tr>
+            <th>曲名</th>
+            <th>アーティスト名</th>
+            <th>コメント</th>
+            <th>送信者</th>
+            {% if current_user.username == 'admin' %}
+                <th>操作</th>
+            {% endif %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for req in requests %}
+            <tr>
+                <td>{{ req.song_name }}</td>
+                <td>{{ req.artist_name }}</td>
+                <td>{{ req.comment }}</td>
+                <td>{{ req.user.username }}</td>
+                {% if current_user.username == 'admin' %}
+                    <td>
+                        <form method="POST" action="{{ url_for('delete_request', request_id=req.id) }}" onsubmit="return confirm('このリクエストを削除しますか？');">
+                            <button type="submit">削除</button>
+                        </form>
+                    </td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+</body>
+</html>

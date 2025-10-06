@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ action }} - 放送リクエスト</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 1em;
+            background-color: #f7f7f7;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.8em;
+            margin-bottom: 1em;
+        }
+
+        form {
+            max-width: 500px;
+            margin: auto;
+            padding: 1.5em;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        label {
+            display: block;
+            margin-top: 1em;
+            font-weight: bold;
+        }
+
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 0.8em;
+            margin-top: 0.3em;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.8em;
+            margin-top: 1.5em;
+            font-size: 1.1em;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .flash-message {
+            max-width: 500px;
+            margin: 0.5em auto;
+            padding: 0.8em 1em;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .flash-success {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        .flash-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 1em;
+            text-align: center;
+            width: 100%;
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    {% if current_user %}
+        <div class="top-bar">{{ current_user.username }}でログイン中</div>
+    {% endif %}
+
+    <h1>{{ action }}</h1>
+
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-message flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        <label>ユーザー名：
+            <input type="text" name="username" required>
+        </label>
+        <label>パスワード：
+            <input type="password" name="password" required>
+        </label>
+        <button type="submit">{{ action }}</button>
+    </form>
+
+    {% if action == 'ログイン' %}
+        <p>アカウントをお持ちでない方は <a href="{{ url_for('register') }}">こちら</a></p>
+    {% else %}
+        <p>既にアカウントをお持ちの方は <a href="{{ url_for('login') }}">ログイン</a></p>
+    {% endif %}
+
+</body>
+</html>
