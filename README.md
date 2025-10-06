@@ -47,8 +47,8 @@ As a member of the school broadcasting committee, I developed this web applicati
 #### 1️⃣ 環境構築
 
 ```bash
-git clone https://github.com/sosuku325/your-repo.git
-cd your-repo
+git clone https://github.com/sosuku325/HousouPages.git
+cd HousouPages
 python -m venv venv
 source venv/bin/activate  # Windowsの場合: venv\Scripts\activate
 ```
@@ -176,10 +176,10 @@ A **Flask-based web application** featuring real-time chat, user authentication,
 #### 1️⃣ Environment Setup
 
 ```bash
-git clone https://github.com/sosuku325/your-repo.git
-cd your-repo
+git clone https://github.com/sosuku325/HousouPages.git
+cd HousouPages
 python -m venv venv
-source venv/bin/activate   # For Windows: venv\Scripts\activate
+source venv/bin/activate  # Windowsの場合: venv\Scripts\activate
 ```
 
 #### 2️⃣ Install Dependencies
@@ -270,3 +270,4 @@ This project is released under the [MIT License](LICENSE.md).
 GitHub: [@sosuku325](https://github.com/sosuku325)
 
 ---
+
